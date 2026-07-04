@@ -72,6 +72,7 @@ export function Bouquet( {numbFlowers,containerWidth, containerHeight, ref}: Bou
     const bouquetCenterY = containerHeight/1.5
 
     const flowerPositions: FlowerPosition[] = generateBouquet(numbFlowers, bouquetCenterX, bouquetCenterY, containerHeight/1.5);
+    flowerPositions.reverse()
     return (
         <div className="bouquet" ref={ref}>
             {/* SVG for stems and flowers */}
