@@ -1,0 +1,40 @@
+
+.winner-popup {
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.winner-content {
+  background: white;
+  padding: 20px 28px;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.winner-content Link {
+  color: white
+}
+
+.winner-content h2 {
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.winner-ok {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+}
+
+.winner-ok:active {
+  transform: translateY(1px);
+}

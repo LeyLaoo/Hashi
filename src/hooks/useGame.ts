@@ -1,18 +1,19 @@
 import { useEffect, useReducer, useState } from "react";
-import type { DragState, GameState } from "../game/types";
+import type { Bridge, DragState, GameCompletionState, GameState } from "../game/types";
 import { gameReducer } from "../game/reducer";
-import { getCandidateIsland, isGameComplete } from "../game/helpers";
-import { CELL_SIZE, OFFSET } from "../game/coordinates";
+import { getBridgeAtPosition, getCandidateIsland, getIslandOnPosition } from "../game/helpers";
+import { getSVGCoordinates } from "../game/coordinates";
+import { canConnect, gameCompletionState } from "../game/validation";
 
 export function useGame(initialState: GameState) {
     const [state, dispatch] = useReducer(gameReducer, initialState);
     const [selectedIsland, setSelectedIsland] = useState<number | null>(null);
     const [dragState, setDragState] = useState<DragState | null>(null);
-    const [isSolved, setIsSolved] = useState(false);
+    const [hoveredBridge, setHoveredBridge] = useState<Bridge | null>(null);
+    const [completionState, setCompletionState] = useState<GameCompletionState>("incomplete");
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setIsSolved(isGameComplete(state.islands, state.bridges));
+        setCompletionState(gameCompletionState(state.islands, state.bridges));
     }, [state.islands, state.bridges]);
 
     function handleIslandClick(id: number) {
@@ -30,61 +31,87 @@ export function useGame(initialState: GameState) {
         setSelectedIsland(null);
     }
 
-    function handlePointerDown(id: number) {
-        setDragState({
-            from: id,
-            hasMoved: false,
-        });
-    }
-
-    function handlePointerMove(event: React.MouseEvent<SVGGElement>) {
-        if (!dragState) return;
-        const originalIsland = state.islands[dragState.from];
-        const gridX = (event.clientX - OFFSET) / CELL_SIZE;
-        const gridY = (event.clientY - OFFSET) / CELL_SIZE;
-        console.log("MOVED ALERT")
-        if (
-            Math.abs(gridX - originalIsland.x) > 15 ||
-            Math.abs(gridY - originalIsland.y) > 15
-        ) {
+    function handlePointerDown(event: React.PointerEvent<SVGGElement>) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+        const { x, y } = getSVGCoordinates(event);
+        const originalIsland = getIslandOnPosition(x, y, state.islands);
+        if (originalIsland) {
             setDragState({
-                ...dragState,
-                hasMoved: true,
+                from: originalIsland,
+                to: null,
             });
+            return;
+        }
+        const bridge = getBridgeAtPosition(x, y, state.bridges);
+        if (bridge) {
+            setHoveredBridge(bridge);
         }
     }
 
-    function handlePointerUp(event: React.MouseEvent<SVGGElement>) {
-        if (!dragState) return;
-
-        const gridX = (event.clientX - OFFSET) / CELL_SIZE;
-        const gridY = (event.clientY - OFFSET) / CELL_SIZE;
-        const candidateIsland = getCandidateIsland(
-            state,
-            state.islands[dragState.from],
-            gridX,
-            gridY,
-        );
-        if (dragState.hasMoved) {
-            console.log(candidateIsland)
-            if (candidateIsland) {
-                dispatch({
-                    type: "BRIDGE_ACTION",
-                    from: dragState.from,
-                    to: candidateIsland.id,
+    function handlePointerMove(event: React.PointerEvent<SVGGElement>) {
+        const { x, y } = getSVGCoordinates(event);
+        if (dragState) {
+            if (Math.abs(x - dragState.from.x) > 0.5 || Math.abs(y - dragState.from.y) > 0.5) {
+                const candidateIsland = getCandidateIsland(state, dragState.from, x, y);
+                if (candidateIsland && canConnect(dragState.from, candidateIsland, state)) {
+                    setDragState({
+                        ...dragState,
+                        to: candidateIsland,
+                    });
+                    setSelectedIsland(null);
+                } else {
+                    setDragState({
+                        ...dragState,
+                        to: null,
+                    });
+                }
+            } else {
+                setDragState({
+                    ...dragState,
+                    to: null,
                 });
             }
-        } else {
-            handleIslandClick(dragState.from);
+            return;
         }
-        setDragState(null)
+        const island = getIslandOnPosition(x, y, state.islands);
+        const bridge = getBridgeAtPosition(x, y, state.bridges);
+        if (!island && bridge) {
+            setHoveredBridge(bridge);
+        } else {
+            setHoveredBridge(null);
+        }
+    }
+
+    function handlePointerUp(event: React.PointerEvent<SVGGElement>) {
+        const { x, y } = getSVGCoordinates(event);
+        const bridge = getBridgeAtPosition(x, y, state.bridges);
+        const island = getIslandOnPosition(x, y, state.islands);
+
+        if (dragState && dragState.to) {
+            dispatch({
+                type: "BRIDGE_ACTION",
+                from: dragState.from.id,
+                to: dragState.to.id,
+            });
+        } else if (island) {
+            handleIslandClick(island.id);
+        } else if (bridge) {
+            dispatch({
+                type: "BRIDGE_REMOVAL",
+                from: bridge.from.id,
+                to: bridge.to.id,
+            });
+        }
+        setHoveredBridge(null);
+        setDragState(null);
     }
 
     return {
         state,
         selectedIsland,
+        hoveredBridge,
         handleIslandClick,
-        isSolved,
+        completionState,
         dragState,
         handlePointerDown,
         handlePointerMove,

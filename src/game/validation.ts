@@ -1,9 +1,17 @@
 import { isHorizontal, crosses, isVertical } from "./geometry";
-import { bridgeToSeg } from "./helpers";
-import type { Bridge, GameState, Island } from "./types";
+import { bridgeToSeg, isFullyConnected, isIslandComplete } from "./helpers";
+import type { Bridge, GameCompletionState, GameState, Island } from "./types";
 
-export function isSolved() {
-    // check if puzzle is complete
+
+
+export function gameCompletionState(islands: Island[], bridges: Bridge[]): GameCompletionState {
+    if (islands.every((island) => isIslandComplete(island, bridges))) {
+        if (isFullyConnected(islands, bridges)) {
+            return "complete";
+        }
+        return "notConnected";
+    }
+    return "incomplete";
 }
 
 export function canConnect(island1: Island, island2: Island, state: GameState) {
@@ -42,16 +50,16 @@ export function canConnect(island1: Island, island2: Island, state: GameState) {
     }
 
     return (
-        wouldCross({ from: island1.id, to: island2.id, count: 1 }, state) ===
+        wouldCross({ from: island1, to: island2, count: 1 }, state) ===
         false
     );
 }
 
 function wouldCross(newBridge: Bridge, state: GameState) {
-    const newSeg = bridgeToSeg(newBridge, state.islands);
+    const newSeg = bridgeToSeg(newBridge);
 
     return state.bridges.some((b) => {
-        const s = bridgeToSeg(b, state.islands);
+        const s = bridgeToSeg(b);
 
         return (
             isHorizontal(newSeg) !== isHorizontal(s) &&

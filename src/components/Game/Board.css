@@ -1,0 +1,21 @@
+.board {
+  position: relative;
+  border: 2px solid var(--accent);
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.board svg {
+  touch-action: none;
+}
+
+.board-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.3); /* dim background (optional) */
+  z-index: 100;
+  pointer-events: auto; /* captures all pointer events */
+}

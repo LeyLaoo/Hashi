@@ -18,3 +18,4 @@ export function crosses(h: Seg, v: Seg): boolean {
         h.a.y < vy2
     );
 }
+
