@@ -1,7 +1,7 @@
 .bouquet {
     position: relative;
     height: 100vh;
-    opacity: 0.5;
+    opacity: 0.75;
     margin: auto;
     /* border: 2px solid var(--accent); */
 }

@@ -3,7 +3,7 @@ import "./App.css";
 import { HashRouter, Route, Routes } from "react-router-dom";
 import WinnerPage from "./components/WinnerPage/WinnerPage";
 
-const width = 15;
+const width = 10;
 const height = 15;
 let maxCellSize = 60;
 

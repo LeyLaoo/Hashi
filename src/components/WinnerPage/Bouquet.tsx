@@ -1,6 +1,6 @@
 import "./Bouquet.css";
 
-const FLOWER_PATH = "/src/assets/flowers/";
+const FLOWER_PATH = `${import.meta.env.BASE_URL}flowers/`;
 const IMAGE_SIZE = 90;
 const flowers = [
     "alstroemeria",
